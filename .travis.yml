@@ -1,0 +1,43 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk22
+os:
+  - linux
+  - windows
+before_install:
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      brew update && brew install webp jpeg-xl libheif
+    fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/linuxbrew/.linuxbrew/lib
+    fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+      export PATH="$TRAVIS_BUILD_DIR/test-libraries/windows/x64:$PATH"
+    fi
+install:
+  - ./gradlew build
+script:
+  - ./gradlew build
+cache:
+  directories:
+    - $HOME/.m2
+    - $HOME/.gradle
+notifications:
+  email: false
+
+deploy:
+  provider: script
+  script: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+  skip_cleanup: true
+
+env:
+  global:
+    - ORG_GRADLE_PROJECT_signingKey=$GPG_KEY
+    - ORG_GRADLE_PROJECT_signingPassword=$GPG_PASSPHRASE
+    - ORG_GRADLE_PROJECT_sonatypeUsername=$MAVENCENTRAL_USER
+    - ORG_GRADLE_PROJECT_sonatypePassword=$MAVENCENTRAL_PASSWORD
